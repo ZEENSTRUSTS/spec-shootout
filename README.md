@@ -63,8 +63,28 @@ named after the product id (for example `sony-a7iv.jpg`).
 
 ## Deploying (GitHub Pages)
 
-`.github/workflows/deploy.yml` builds and publishes the site on every push to `main`.
-One-time setup: **Settings → Pages → Build and deployment → Source: GitHub Actions**.
+Live site: **https://cad-syack.github.io/spec-shootout/**
+
+GitHub Pages serves the `gh-pages` branch. After committing your changes, publish them with:
+
+```bash
+npm run deploy
+```
+
+That type-checks, builds into `dist/`, and pushes the build to `gh-pages`. The site updates about a minute later.
+
+There is also `.github/workflows/deploy.yml`, which does the same thing automatically on every
+push to `main`, if GitHub Actions is enabled for your account. To use it, switch
+**Settings → Pages → Source** to **GitHub Actions**.
+
+## Everyday workflow
+
+```bash
+git add -A
+git commit -m "Describe what you changed"
+git push          # saves the code to GitHub
+npm run deploy    # updates the live site
+```
 
 ## Disclaimer
 
