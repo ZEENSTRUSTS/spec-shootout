@@ -73,10 +73,6 @@ npm run deploy
 
 That type-checks, builds into `dist/`, and pushes the build to `gh-pages`. The site updates about a minute later.
 
-There is also `.github/workflows/deploy.yml`, which does the same thing automatically on every
-push to `main`, if GitHub Actions is enabled for your account. To use it, switch
-**Settings → Pages → Source** to **GitHub Actions**.
-
 ## Everyday workflow
 
 ```bash
