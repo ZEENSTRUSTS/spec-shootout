@@ -1,6 +1,7 @@
 import { memo, useEffect, useMemo, useState } from 'react';
 import { brandsIn, inSection, SECTION_INFO, type Section } from '../data';
 import type { Product } from '../data/types';
+import { matchScore } from '../lib/search';
 import { canShoot, scoresFor, videoStats, resLabel } from '../lib/scoring';
 import { money } from '../lib/specRows';
 import { CountUp, go, ScoreBars } from './Bits';
@@ -90,7 +91,7 @@ export function Browse({ section, compare, toggleCompare }: { section: Section; 
   const maxP = hi >= PRICES.length - 1 ? Infinity : PRICES[hi];
 
   const list = useMemo(() => {
-    const needle = q.trim().toLowerCase();
+    const needle = q.trim();
     const [, from, to] = ERAS[era];
     const items = all
       .filter(
@@ -101,7 +102,7 @@ export function Browse({ section, compare, toggleCompare }: { section: Section; 
           p.year <= to &&
           p.price >= minP &&
           p.price <= maxP &&
-          (!needle || `${p.brand} ${p.model} ${p.segment} ${p.short}`.toLowerCase().includes(needle)),
+          (!needle || matchScore(p, needle) > 0),
       )
       .map((p) => {
         let match: ReturnType<typeof canShoot> = null;
@@ -132,6 +133,8 @@ export function Browse({ section, compare, toggleCompare }: { section: Section; 
           return -s.overall;
       }
     };
+    // with a search typed and the default sort, show the closest matches first
+    if (needle && sort === 'overall') return items.sort((a, b) => matchScore(b.p, needle) - matchScore(a.p, needle));
     return items.sort((a, b) => key(a.p) - key(b.p));
   }, [all, q, brand, type, era, sort, tier, fps, uncropped, minP, maxP, finderOn]);
 

@@ -9,31 +9,9 @@ import { money } from '../lib/specRows';
 import { go } from './Bits';
 import { Aperture, setIris } from './Chrome';
 import { ProductImage } from './ProductImage';
+import { searchProducts } from '../lib/search';
 
-const norm = (s: string) => s.toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
-const squash = (s: string) => s.toLowerCase().replace(/[^a-z0-9]+/g, '');
-
-/** Every word of the query must appear in brand + model (spaces/dashes ignored), best matches first. */
-function search(q: string): Product[] {
-  const words = norm(q).split(' ').filter(Boolean);
-  if (!words.length) return [];
-  const scored: { p: Product; s: number }[] = [];
-  for (const p of products) {
-    const hay = `${p.brand} ${p.model} ${p.short ?? ''} ${sectionOf(p)} ${'type' in p ? p.type : ''}`;
-    const flat = squash(hay);
-    const spaced = norm(hay);
-    if (!words.every((w) => flat.includes(squash(w)))) continue;
-    let s = 0;
-    for (const w of words) {
-      if (spaced.split(' ').includes(w)) s += 3;
-      if (squash(p.model).startsWith(squash(w))) s += 4;
-    }
-    if (squash(p.model) === squash(q) || squash(p.short ?? '') === squash(q)) s += 20;
-    s += p.year / 1000;
-    scored.push({ p, s });
-  }
-  return scored.sort((a, b) => b.s - a.s).map((x) => x.p);
-}
+const search = (q: string): Product[] => (q.trim() ? searchProducts(products, q) : []);
 
 const SECTION_HERO: Record<Section, string> = { cameras: 'sony-a7iv', action: 'dji-osmo-pocket-3', drones: 'dji-mini-4-pro', gimbals: 'dji-rs-4' };
 const QUICK = ['Canon 60D', 'Pocket 4', 'FX3', 'Mini 5 Pro', 'a7 V'];
