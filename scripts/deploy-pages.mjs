@@ -24,4 +24,4 @@ run('git', [...who, 'add', '-A'], dist);
 run('git', [...who, 'commit', '-q', '-m', `Deploy ${new Date().toISOString()}`], dist);
 run('git', ['push', '-q', '-f', remote, 'gh-pages'], dist);
 rmSync(repo, { recursive: true, force: true });
-console.log('\nDeployed. GitHub Pages updates in about a minute: https://cad-syack.github.io/spec-shootout/');
+console.log('\nDeployed. GitHub Pages updates in about a minute: https://zeenstrusts.github.io/spec-shootout/');

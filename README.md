@@ -63,7 +63,7 @@ named after the product id (for example `sony-a7iv.jpg`).
 
 ## Deploying (GitHub Pages)
 
-Live site: **https://cad-syack.github.io/spec-shootout/**
+Live site: **https://zeenstrusts.github.io/spec-shootout/**
 
 GitHub Pages serves the `gh-pages` branch. After committing your changes, publish them with:
 
