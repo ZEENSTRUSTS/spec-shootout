@@ -20,6 +20,7 @@ export const SENSOR_SCORE: Record<SensorSize, number> = {
   '1/1.1-inch': 44,
   '1.4-inch': 54,
   '1/2.8-inch': 14,
+  '1/4-inch': 8,
 };
 
 export const modeWidth = (m: VideoMode) => Math.max(...m.dims.split('x').map(Number));

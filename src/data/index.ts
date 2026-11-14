@@ -6,13 +6,16 @@ import { panasonic } from './panasonic';
 import { action } from './action';
 import { more } from './more';
 import { action2 } from './action2';
-import { drones } from './drones';
+import { drones as droneLine } from './drones';
+import { drones2 } from './drones2';
 import { gimbals } from './gimbals';
 import { ACTION_TYPES, type Camera, type Product } from './types';
 
 export type Section = 'cameras' | 'action' | 'drones' | 'gimbals';
 
 export const cameras: Camera[] = [...canon, ...sony, ...nikon, ...fujifilm, ...panasonic, ...more, ...action, ...action2];
+/** Every DJI drone: the core consumer line plus early, 2026, enterprise, farm and delivery models. */
+export const drones = [...droneLine, ...drones2];
 export const products: Product[] = [...cameras, ...drones, ...gimbals];
 const map = new Map(products.map((p) => [p.id, p]));
 export const byId = (id: string | undefined) => (id ? map.get(id) : undefined);
@@ -31,4 +34,4 @@ export const SECTION_INFO: Record<Section, { title: string; noun: string; plural
   drones: { title: 'Drones', noun: 'drone', plural: 'drones' },
   gimbals: { title: 'Gimbals', noun: 'gimbal', plural: 'gimbals' },
 };
-export { drones, gimbals };
+export { gimbals };

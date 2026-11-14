@@ -1,4 +1,4 @@
-import type { Brand, Camera, CameraLook, CamType, Drone, DroneCamera, DroneLook, Obstacle, SensorSize, VideoMode, Viewfinder } from './types';
+import type { Brand, Camera, CameraLook, CamType, Drone, DroneCamera, DroneLook, DroneUse, Obstacle, SensorSize, VideoMode, Viewfinder } from './types';
 
 /**
  * Compact authoring format for cameras. Each video mode is one string:
@@ -158,6 +158,7 @@ export interface DroneIn {
   price: number;
   seg: string;
   look: DroneLook;
+  use?: DroneUse;
   verify?: boolean;
   cams: [string, SensorSize, number, string, string, string][]; // name, sensor, MP, focal, aperture, max video
   v: { log?: string[]; codecs: string[]; bit: number; mbps: number; hdr?: string; vertical?: boolean; m: string[] };
@@ -177,6 +178,7 @@ export function drone(i: DroneIn): Drone {
     year: i.year,
     price: i.price,
     segment: i.seg,
+    use: i.use ?? (i.look === 'fpv' ? 'FPV' : 'Camera'),
     look: i.look,
     verify: i.verify,
     cameras,

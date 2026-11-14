@@ -49,12 +49,12 @@ export function direct(root: HTMLElement) {
   if (cards.length) {
     const tl = gsap.timeline({ delay: 0.1 });
     cards.forEach((c, i) => {
-      const fromLeft = i < cards.length / 2;
-      tl.from(c, { autoAlpha: 0, x: (fromLeft ? -1 : 1) * 70, rotation: (fromLeft ? -1 : 1) * 2.5, duration: 0.95, ease: EASE.expo }, i * 0.08);
+      // straight fade-up (no tilt, no sideways slide); transforms are cleared so cards always end level
+      tl.from(c, { autoAlpha: 0, y: 24, duration: 0.8, ease: EASE.expo, clearProps: 'transform' }, i * 0.08);
       const img = c.querySelector('.pimg');
       if (img) tl.fromTo(img, { clipPath: 'inset(0% 0% 100% 0%)' }, { clipPath: 'inset(0% 0% 0% 0%)', duration: 0.9, ease: EASE.expo, clearProps: 'clipPath' }, i * 0.08 + 0.15);
     });
-    q('.vs-badge').forEach((b) => tl.from(b, { scale: 0, rotation: -140, autoAlpha: 0, duration: 0.7, ease: EASE.pop }, 0.45));
+    q('.vs-badge').forEach((b) => tl.from(b, { scale: 0.6, autoAlpha: 0, duration: 0.5, ease: EASE.out, clearProps: 'transform' }, 0.4));
     q('.verdict').forEach((v) => tl.from(v, { autoAlpha: 0, y: 30, scale: 0.97, duration: 0.9, ease: EASE.expo }, 0.6));
     q('.verdict .gains li, .verdict .losses li').length && tl.from(q('.verdict .gains li, .verdict .losses li'), { autoAlpha: 0, x: -14, stagger: 0.05, duration: 0.5 }, 0.95);
     q('.vs-pick .vs-side').length && gsap.from(q('.vs-pick .vs-side'), { autoAlpha: 0, y: 16, stagger: 0.06, duration: 0.6, delay: 0.2 });

@@ -49,7 +49,9 @@ function index(p: Product): Indexed {
   let x = cache.get(p);
   if (!x) {
     const type = 'type' in p ? p.type : 'cls' in p ? `${p.cls} gimbal` : 'drone';
-    const hay = `${p.brand} ${BRAND_ALIASES[p.brand] ?? ''} ${p.model} ${p.short ?? ''} ${p.id} ${type} ${sectionOf(p)} ${p.segment} ${p.year}`;
+    // DJI's Mini and Air drones were sold as "Mavic Mini" / "Mavic Air", and people still call them that
+    const extra = p.kind === 'drone' && /^(mini|air)\s/i.test(p.model) ? 'mavic' : '';
+    const hay = `${p.brand} ${BRAND_ALIASES[p.brand] ?? ''} ${extra} ${p.model} ${p.short ?? ''} ${p.id} ${type} ${sectionOf(p)} ${p.segment} ${p.year}`;
     const list = words(hay).flatMap((w) => {
       // also split letters from digits so "60d" can be found as "60" and "a7" as "a 7"
       const parts = w.match(/[a-z]+|[0-9]+/g) ?? [];

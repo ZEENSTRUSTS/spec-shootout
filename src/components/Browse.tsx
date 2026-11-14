@@ -34,7 +34,7 @@ const ERAS: [string, number, number][] = [
 const TYPES: Record<Section, string[]> = {
   cameras: ['All', 'Mirrorless', 'DSLR', 'Cinema', 'Compact'],
   action: ['All', 'Action', '360', 'Pocket gimbal'],
-  drones: [],
+  drones: ['All', 'Camera', 'FPV', 'Enterprise', 'Agriculture', 'Delivery'],
   gimbals: ['All', 'Camera', 'Phone'],
 };
 const PRICES = [0, 100, 200, 300, 500, 750, 1000, 1500, 2000, 2500, 3000, 4000, 5000, 7500, 10000, 20000];
@@ -72,7 +72,7 @@ function loadView(): View {
   }
 }
 
-const typeOf = (p: Product) => (p.kind === 'camera' ? p.type : p.kind === 'gimbal' ? p.cls : '');
+const typeOf = (p: Product) => (p.kind === 'camera' ? p.type : p.kind === 'gimbal' ? p.cls : p.use);
 
 export function Browse({ section, compare, toggleCompare }: { section: Section; compare: string[]; toggleCompare: (id: string) => void }) {
   const k = `browse2-${section}`;

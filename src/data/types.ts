@@ -20,7 +20,8 @@ export type SensorSize =
   | '1/1.9-inch'
   | '1/1.1-inch'
   | '1.4-inch'
-  | '1/2.8-inch';
+  | '1/2.8-inch'
+  | '1/4-inch';
 
 /**
  * One recording mode. `fps` lists every frame rate offered in this mode
@@ -103,6 +104,9 @@ export interface DroneCamera {
   maxVideo: string;
 }
 
+/** What kind of drone it is (used for the Drones page filter). */
+export type DroneUse = 'Camera' | 'FPV' | 'Enterprise' | 'Agriculture' | 'Delivery';
+
 export type Obstacle = 'omni-lidar' | 'omni' | 'forward' | 'downward';
 
 export interface Drone {
@@ -114,6 +118,7 @@ export interface Drone {
   year: number;
   price: number;
   segment: string;
+  use: DroneUse;
   look: DroneLook;
   verify?: boolean;
   cameras: DroneCamera[];
