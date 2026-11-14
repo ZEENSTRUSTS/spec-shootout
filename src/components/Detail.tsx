@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState, type PointerEvent as RPointerEvent } from 'react';
+import { gsap, reducedMotion } from '../lib/motion';
 import { products, sectionOf } from '../data';
 import type { Filmable, Product } from '../data/types';
 import { scoresFor, videoStats, resLabel, type Factor } from '../lib/scoring';
@@ -23,17 +24,99 @@ export function PhotoCredit({ id }: { id: string }) {
   );
 }
 
+/**
+ * Main photo + thumbnails. Swipe left/right (or drag with a mouse) to move between angles;
+ * the photo follows your finger, then the next one slides in.
+ */
 function Gallery({ product }: { product: Product }) {
   usePhotoSets();
   const files = photosFor(product.id);
-  const [sel, setSel] = useState<number | undefined>(undefined);
+  const [sel, setSel] = useState(0);
+  const dir = useRef(0);
+  const wrap = useRef<HTMLDivElement>(null);
+  const drag = useRef<{ x: number; y: number; id: number; dx: number; locked: boolean | null } | null>(null);
+  const n = files.length;
+
+  const go2 = (k: number, d: number) => {
+    if (n < 2) return;
+    dir.current = d;
+    setSel(((k % n) + n) % n);
+  };
+
+  // slide the newly shown photo in from the side it came from
+  useEffect(() => {
+    const img = wrap.current?.querySelector<HTMLImageElement>('.pimg img.on');
+    if (!img || !dir.current || reducedMotion()) return;
+    gsap.fromTo(img, { x: dir.current * 70, opacity: 0 }, { x: 0, opacity: 1, duration: 0.45, ease: 'power3.out', clearProps: 'transform,opacity' });
+    dir.current = 0;
+  }, [sel]);
+
+  const current = () => wrap.current?.querySelector<HTMLImageElement>('.pimg img.on');
+  const onDown = (e: RPointerEvent) => {
+    if (n < 2 || e.button > 0) return;
+    drag.current = { x: e.clientX, y: e.clientY, id: e.pointerId, dx: 0, locked: null };
+  };
+  const onMove = (e: RPointerEvent) => {
+    const d = drag.current;
+    if (!d || d.id !== e.pointerId) return;
+    const dx = e.clientX - d.x;
+    const dy = e.clientY - d.y;
+    if (d.locked === null && Math.abs(dx) + Math.abs(dy) > 8) {
+      d.locked = Math.abs(dx) > Math.abs(dy); // sideways = swipe, up/down = let the page scroll
+      if (d.locked) (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
+    }
+    if (!d.locked) return;
+    d.dx = dx;
+    const img = current();
+    if (img) gsap.set(img, { x: dx * 0.9, opacity: 1 - Math.min(0.5, Math.abs(dx) / 500) });
+  };
+  const onUp = () => {
+    const d = drag.current;
+    drag.current = null;
+    if (!d || !d.locked) return;
+    const img = current();
+    if (Math.abs(d.dx) > 45) {
+      const step = d.dx < 0 ? 1 : -1;
+      if (img) gsap.to(img, { x: -step * 90, opacity: 0, duration: 0.18, ease: 'power2.in', onComplete: () => gsap.set(img, { clearProps: 'transform,opacity' }) });
+      window.setTimeout(() => go2(sel + step, step), 120);
+    } else if (img) gsap.to(img, { x: 0, opacity: 1, duration: 0.3, ease: 'power3.out', clearProps: 'transform,opacity' });
+  };
+
   return (
     <>
-      <ProductImage product={product} size="lg" index={sel} />
-      {files.length > 1 && (
+      <div
+        ref={wrap}
+        className={`gallery-swipe ${n > 1 ? 'can-swipe' : ''}`}
+        onPointerDown={onDown}
+        onPointerMove={onMove}
+        onPointerUp={onUp}
+        onPointerCancel={onUp}
+        onKeyDown={(e) => {
+          if (e.key === 'ArrowRight') go2(sel + 1, 1);
+          if (e.key === 'ArrowLeft') go2(sel - 1, -1);
+        }}
+        tabIndex={n > 1 ? 0 : -1}
+        aria-label={n > 1 ? `Photo ${sel + 1} of ${n}. Swipe or use arrow keys for more.` : undefined}
+      >
+        <ProductImage product={product} size="lg" index={sel} cycle={false} />
+        {n > 1 && (
+          <>
+            <button className="gal-arrow prev" aria-label="Previous photo" onClick={() => go2(sel - 1, -1)}>
+              ‹
+            </button>
+            <button className="gal-arrow next" aria-label="Next photo" onClick={() => go2(sel + 1, 1)}>
+              ›
+            </button>
+            <span className="gal-count mono">
+              {sel + 1} / {n}
+            </span>
+          </>
+        )}
+      </div>
+      {n > 1 && (
         <div className="thumbs">
           {files.map((f, k) => (
-            <button key={f} className={(sel ?? 0) === k ? 'on' : ''} onClick={() => setSel(k)} onMouseEnter={() => setSel(k)} aria-label={`View ${k + 1}`}>
+            <button key={f} className={sel === k ? 'on' : ''} onClick={() => go2(k, k > sel ? 1 : -1)} onMouseEnter={() => k !== sel && go2(k, k > sel ? 1 : -1)} aria-label={`View ${k + 1}`}>
               <img referrerPolicy="no-referrer" src={f} alt="" loading="lazy" />
             </button>
           ))}
@@ -184,9 +267,6 @@ export function Detail({ product, toggleCompare, compare }: { product: Product; 
           <Gallery product={product} />
           <div className="photo-tools">
             <PhotoCredit id={product.id} />
-            <button className="link small" onClick={() => go(`/photos/${product.id}`)}>
-              {photosFor(product.id).length ? 'Replace photos' : '📸 Add real photos'}
-            </button>
           </div>
         </div>
         <div className="detail-info">

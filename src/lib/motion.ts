@@ -21,8 +21,6 @@ export const EASE = {
 
 export const DUR = { xs: 0.18, sm: 0.32, md: 0.55, lg: 0.9, xl: 1.3 } as const;
 
-/** Distance (px) content travels on entrance — small, so motion reads as "settling", not "flying in". */
-export const RISE = 14;
 
 gsap.defaults({ ease: EASE.out, duration: DUR.md });
 ScrollTrigger.config({ ignoreMobileResize: true });

@@ -154,18 +154,22 @@ export function rankAll(a: Required<Answers>): Pick[] {
   return out.sort((x, y) => y.fit - x.fit);
 }
 
+/** How many recommendations the finder shows (best match + alternatives). */
+export const PICKS = 6;
+
 export function findGear(a: Required<Answers>): Pick[] {
   const out = rankAll(a);
   // avoid three near-identical siblings: max two from the same brand in the top three
   const top: Pick[] = [];
   for (const x of out) {
-    if (top.length === 3) break;
-    if (x.p.kind === 'camera' && top.filter((t) => t.p.brand === x.p.brand).length >= 2) continue;
+    if (top.length === PICKS) break;
+    // keep the list varied: at most 3 cameras from one brand
+    if (x.p.kind === 'camera' && top.filter((t) => t.p.brand === x.p.brand).length >= 3) continue;
     top.push(x);
   }
   // show as a match %: best pick near the top, others relative to it
   const best = top[0]?.fit ?? 0;
-  for (const t of top) t.fit = Math.max(60, Math.round(97 - 2.5 * (best - t.fit)));
+  for (const t of top) t.fit = Math.max(55, Math.round(97 - 1.6 * (best - t.fit)));
   return top;
 }
 

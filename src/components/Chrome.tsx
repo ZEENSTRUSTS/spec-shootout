@@ -1,9 +1,8 @@
 /**
  * Site-wide "camera body" layer: first-visit aperture intro, shutter page transitions,
- * custom cursor + magnetic controls, scroll progress, header behaviour and background parallax.
+ * magnetic controls + card spotlight, scroll progress, header behaviour and background parallax.
  */
 import { useEffect, useId, useRef } from 'react';
-import { byId, SECTION_INFO, type Section } from '../data';
 import { bladeLines, DESKTOP, EASE, gsap, irisPath, isDesktop, markIntroDone, reducedMotion, ScrollTrigger, useGSAP } from '../lib/motion';
 import { registerShutter } from './Bits';
 
@@ -87,16 +86,6 @@ function Intro() {
 }
 
 /* ═══════════════════ Shutter page transition ═══════════════════ */
-const label = (path: string) => {
-  const [a, b] = path.split('/').filter(Boolean);
-  if (a === 'p') return byId(b)?.model ?? 'Product';
-  if (a === 'vs') return 'Versus';
-  if (a === 'kits') return 'Gear paths';
-  if (a === 'photos') return 'Photo manager';
-  if (a === 'home' || !a) return 'Spec Shootout';
-  return SECTION_INFO[a as Section]?.title ?? a;
-};
-
 function Shutter() {
   const ref = useRef<HTMLDivElement>(null);
   const busy = useRef(false);
@@ -107,13 +96,13 @@ function Shutter() {
       busy.current = true;
       const tl = gsap.timeline({ onComplete: () => void (busy.current = false) });
       const el = ref.current!;
-      el.querySelector('.sh-label')!.textContent = label(path);
       tl.set(el, { autoAlpha: 1 })
         .fromTo('.sh-top', { yPercent: -101 }, { yPercent: 0, duration: 0.36, ease: EASE.in }, 0)
         .fromTo('.sh-bot', { yPercent: 101 }, { yPercent: 0, duration: 0.36, ease: EASE.in }, 0)
-        .fromTo('.sh-center', { autoAlpha: 0, scale: 0.8 }, { autoAlpha: 1, scale: 1, duration: 0.3 }, 0.18)
+        // the brand mark fades up out of the dark, turning like an aperture, then dissolves as the page opens
+        .fromTo('.sh-center', { autoAlpha: 0, scale: 0.7, rotation: -60, filter: 'blur(6px)' }, { autoAlpha: 0.9, scale: 1, rotation: 0, filter: 'blur(0px)', duration: 0.38, ease: EASE.expo }, 0.14)
         .add(swap, 0.38)
-        .to('.sh-center', { autoAlpha: 0, scale: 1.08, duration: 0.25, ease: EASE.in }, 0.62)
+        .to('.sh-center', { autoAlpha: 0, scale: 1.25, filter: 'blur(4px)', duration: 0.3, ease: EASE.in }, 0.6)
         .to('.sh-top', { yPercent: -101, duration: 0.7, ease: EASE.expo }, 0.66)
         .to('.sh-bot', { yPercent: 101, duration: 0.7, ease: EASE.expo }, 0.66)
         .set(el, { autoAlpha: 0 });
@@ -126,51 +115,35 @@ function Shutter() {
       <div className="sh-top" />
       <div className="sh-bot" />
       <div className="sh-center">
-        <span className="sh-dot" />
-        <span className="sh-label" />
+        <span className="logo-mark sh-logo">
+          <span className="aperture" />
+        </span>
       </div>
     </div>
   );
 }
 
-/* ═══════════════════ Cursor + magnetic + spotlight ═══════════════════ */
+/* ═══════════════════ Magnetic buttons + card spotlight (mouse only; the normal cursor stays) ═══════════════════ */
 const MAGNETIC = '.btn, .logo, nav button, [data-magnetic], .hs-chip';
-const HOVERABLE = 'a, button, select, input, label, [data-cursor], .card';
+const SPOTLIT = '.card, .home-section, .hn-card, .kit-slot, .pt-card';
 
-function Cursor() {
-  const dot = useRef<HTMLDivElement>(null);
-  const ring = useRef<HTMLDivElement>(null);
+function PointerFx() {
   useGSAP(() => {
     const mm = gsap.matchMedia();
     mm.add(DESKTOP, () => {
       if (reducedMotion()) return;
-      // Native mouse cursor is kept: the custom dot/ring stay hidden (no `has-cursor` class).
-      // This handler still drives the magnetic buttons and the card spotlight.
-      const dx = gsap.quickTo(dot.current, 'x', { duration: 0.08, ease: 'power3' });
-      const dy = gsap.quickTo(dot.current, 'y', { duration: 0.08, ease: 'power3' });
-      const rx = gsap.quickTo(ring.current, 'x', { duration: 0.45, ease: 'power3' });
-      const ry = gsap.quickTo(ring.current, 'y', { duration: 0.45, ease: 'power3' });
       let magnet: HTMLElement | null = null;
       let mx: gsap.QuickToFunc | null = null;
       let my: gsap.QuickToFunc | null = null;
-      let hover: Element | null = null;
-      const lbl = ring.current!.querySelector('span')!;
-
       const release = () => {
-        if (magnet && mx && my) {
-          mx(0);
-          my(0);
-        }
-        magnet = null;
+        mx?.(0);
+        my?.(0);
+        magnet = mx = my = null;
       };
       const move = (e: PointerEvent) => {
         if (e.pointerType !== 'mouse') return;
-        dx(e.clientX);
-        dy(e.clientY);
-        rx(e.clientX);
-        ry(e.clientY);
         const t = e.target as Element;
-        // magnetic pull toward the centre of buttons
+        // buttons lean gently toward the pointer
         const m = t.closest?.(MAGNETIC) as HTMLElement | null;
         if (m !== magnet) {
           release();
@@ -186,54 +159,23 @@ function Cursor() {
           mx(gsap.utils.clamp(-12, 12, (e.clientX - (r.left + r.width / 2)) * k));
           my(gsap.utils.clamp(-10, 10, (e.clientY - (r.top + r.height / 2)) * k));
         }
-        // spotlight position for cards
-        const spot = t.closest?.('.card, .home-section, .hn-card, .kit-slot, .pt-card') as HTMLElement | null;
+        // soft glow that follows the pointer across cards
+        const spot = t.closest?.(SPOTLIT) as HTMLElement | null;
         if (spot) {
           const r = spot.getBoundingClientRect();
           spot.style.setProperty('--mx', `${e.clientX - r.left}px`);
           spot.style.setProperty('--my', `${e.clientY - r.top}px`);
         }
-        // ring state
-        const h = t.closest?.(HOVERABLE) ?? null;
-        if (h !== hover) {
-          hover = h;
-          const text = (h as HTMLElement | null)?.closest?.('[data-cursor]')?.getAttribute('data-cursor') ?? (h?.matches('.card') ? 'View' : '');
-          const isText = !!h?.matches('input, select');
-          lbl.textContent = text;
-          gsap.to(ring.current, { scale: text ? 2.4 : h ? (isText ? 0.6 : 1.6) : 1, duration: 0.4, ease: EASE.out });
-          gsap.to(lbl, { autoAlpha: text ? 1 : 0, duration: 0.2 });
-          gsap.to(dot.current, { scale: h ? 0 : 1, duration: 0.25 });
-        }
       };
-      const down = () => gsap.to(ring.current, { scale: '-=0.25', duration: 0.12 });
-      const up = () => gsap.to(ring.current, { scale: hover ? 1.6 : 1, duration: 0.35, ease: EASE.out });
-      const leave = () => gsap.to([dot.current, ring.current], { autoAlpha: 0, duration: 0.2 });
-      const enter = () => gsap.to([dot.current, ring.current], { autoAlpha: 1, duration: 0.2 });
       window.addEventListener('pointermove', move, { passive: true });
-      window.addEventListener('pointerdown', down);
-      window.addEventListener('pointerup', up);
-      document.documentElement.addEventListener('pointerleave', leave);
-      document.documentElement.addEventListener('pointerenter', enter);
       return () => {
         release();
-        document.documentElement.classList.remove('has-cursor');
         window.removeEventListener('pointermove', move);
-        window.removeEventListener('pointerdown', down);
-        window.removeEventListener('pointerup', up);
-        document.documentElement.removeEventListener('pointerleave', leave);
-        document.documentElement.removeEventListener('pointerenter', enter);
       };
     });
     return () => mm.revert();
   });
-  return (
-    <>
-      <div ref={ring} className="cursor-ring" aria-hidden>
-        <span />
-      </div>
-      <div ref={dot} className="cursor-dot" aria-hidden />
-    </>
-  );
+  return null;
 }
 
 /* ═══════════════════ Scroll chrome ═══════════════════ */
@@ -280,7 +222,7 @@ export function Chrome({ routeKey }: { routeKey: string }) {
     <>
       <Intro />
       <Shutter />
-      {isDesktop() && <Cursor />}
+      {isDesktop() && <PointerFx />}
       <ScrollChrome routeKey={routeKey} />
     </>
   );

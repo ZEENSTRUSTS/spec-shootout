@@ -392,6 +392,9 @@ export function Home() {
           <span className="eyebrow">Gear paths</span>
           <h2>From your first camera to world-class.</h2>
           <p className="muted">Complete kits for every level — with cheap used options for tight budgets.</p>
+          <span className="paths-hint" aria-hidden>
+            Swipe to see all {TRACKS.length} paths →
+          </span>
         </div>
         <div className="paths-viewport">
           <div className="paths-track">

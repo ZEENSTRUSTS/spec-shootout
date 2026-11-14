@@ -102,3 +102,21 @@
   .frame .pimg { height: 92px; }
 }
 @media (prefers-reduced-motion: reduce) { .vf-hud .rec i { animation: none; } }
+
+.paths-hint { display: none; align-items: center; gap: 6px; margin-top: 4px; font-size: 12.5px; color: var(--accent); font-weight: 650; }
+/* ── Gear paths rail on touch screens and small windows: swipe sideways (desktop mouse users get the pinned scroll instead) ── */
+@media not all and (min-width: 900px) and (pointer: fine) {
+  .paths-viewport {
+    overflow-x: auto; overflow-y: hidden; scroll-snap-type: x proximity; overscroll-behavior-x: contain;
+    -webkit-overflow-scrolling: touch; touch-action: pan-x pan-y; scrollbar-width: none;
+    margin: 0 calc(-1 * var(--gut)); padding: 4px var(--gut) 12px; scroll-padding-inline: var(--gut);
+  }
+  .paths-viewport::-webkit-scrollbar { display: none; }
+  .paths-track { padding-right: var(--gut); }
+  .pt-card { scroll-snap-align: start; }
+  .paths-hint { display: inline-flex; }
+}
+
+/* search results must sit above the film strips that follow the hero */
+.home-hero { z-index: 5; }
+.home .hs-results { z-index: 50; background: #15171d; }

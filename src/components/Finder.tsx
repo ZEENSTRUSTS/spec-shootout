@@ -210,18 +210,18 @@ function Result({ a, picks, restart }: { a: Required<Answers>; picks: ReturnType
       <PickCard pick={best} hero />
       {rest.length > 0 && (
         <>
-          <span className="eyebrow fq-also">Also worth a look</span>
+          <span className="eyebrow fq-also">Also worth a look · {rest.length} more</span>
           <div className="fq-rest">
-            {rest.map((x) => (
-              <PickCard key={x.p.id} pick={x} />
+            {rest.map((x, i) => (
+              <PickCard key={x.p.id} pick={x} rank={i + 2} />
             ))}
           </div>
         </>
       )}
       <div className="fq-actions">
         {picks.length > 1 && (
-          <button className="btn" onClick={() => go(`/vs/${picks.map((x) => x.p.id).join('/')}`)}>
-            Compare all {picks.length} in Versus →
+          <button className="btn" onClick={() => go(`/vs/${picks.slice(0, 4).map((x) => x.p.id).join('/')}`)}>
+            Compare the top {Math.min(4, picks.length)} in Versus →
           </button>
         )}
         <button className="btn ghost" onClick={() => go(`/kits/${path.track}/${path.tier}`)}>
@@ -235,13 +235,14 @@ function Result({ a, picks, restart }: { a: Required<Answers>; picks: ReturnType
   );
 }
 
-function PickCard({ pick, hero }: { pick: ReturnType<typeof findGear>[number]; hero?: boolean }) {
+function PickCard({ pick, hero, rank }: { pick: ReturnType<typeof findGear>[number]; hero?: boolean; rank?: number }) {
   const { p } = pick;
   return (
     <button className={`panel fq-pick ${hero ? 'hero-pick' : ''}`} onClick={() => go(`/p/${p.id}`)}>
       <ProductImage product={p} size={hero ? 'lg' : 'md'} />
       <div className="fq-pmain">
         <span className="muted small">
+          {rank ? <b className="fq-rank">#{rank}</b> : null}
           {p.brand} · {p.year}
         </span>
         <b className="fq-name">{p.model}</b>

@@ -85,7 +85,7 @@ function tokenScore(t: string, x: Indexed): number {
   if (x.flat.includes(t)) return 2;
   // typo tolerance: letters only, long enough to be meaningful
   if (t.length >= 4 && /^[a-z]+$/.test(t)) {
-    const max = t.length >= 7 ? 2 : 1;
+    const max = t.length >= 5 ? 2 : 1;
     if (x.list.some((w) => within(t, w, max) || (w.length > t.length && within(t, w.slice(0, t.length), max)))) return 1;
   }
   return 0;

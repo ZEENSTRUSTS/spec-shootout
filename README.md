@@ -46,7 +46,7 @@ src/
     exporter.ts        PDF / JPEG export of a comparison
     motion.ts, director.ts   GSAP setup and page choreography
   styles.css, motion.css, fx.css, fx-home.css
-scripts/               helper scripts used to collect product photos and logos
+scripts/deploy-pages.mjs   builds the site and publishes it to the gh-pages branch
 ```
 
 ### Adding or fixing a product

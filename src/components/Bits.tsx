@@ -73,29 +73,6 @@ export function CountUp({ value, ms }: { value: number; ms?: number }) {
   return <>{useCountUp(value, ms)}</>;
 }
 
-/** Pointer-driven 3D tilt + spotlight. Spread the returned handlers onto an element. */
-export function useTilt(max = 7) {
-  const ref = useRef<HTMLElement | null>(null);
-  const onMouseMove = (e: React.MouseEvent) => {
-    const el = ref.current;
-    if (!el || reduced()) return;
-    const r = el.getBoundingClientRect();
-    const x = (e.clientX - r.left) / r.width;
-    const y = (e.clientY - r.top) / r.height;
-    el.style.setProperty('--rx', `${(0.5 - y) * max}deg`);
-    el.style.setProperty('--ry', `${(x - 0.5) * max}deg`);
-    el.style.setProperty('--mx', `${x * 100}%`);
-    el.style.setProperty('--my', `${y * 100}%`);
-  };
-  const onMouseLeave = () => {
-    const el = ref.current;
-    if (!el) return;
-    el.style.setProperty('--rx', '0deg');
-    el.style.setProperty('--ry', '0deg');
-  };
-  return { ref, onMouseMove, onMouseLeave };
-}
-
 export function Bar({ label, value, color, compact, delay = 0 }: { label: string; value: number; color?: string; compact?: boolean; delay?: number }) {
   return (
     <div className={`bar ${compact ? 'bar-compact' : ''}`}>

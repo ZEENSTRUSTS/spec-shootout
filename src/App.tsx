@@ -9,10 +9,6 @@ import { Finder } from './components/Finder';
 import { Home } from './components/Home';
 import { Page } from './components/Page';
 import { Chrome } from './components/Chrome';
-import { Audit } from './components/Audit';
-import { PhotoManager } from './components/PhotoManager';
-import { usePhotoSets } from './lib/photoStore';
-import { products } from './data';
 import { ProductImage } from './components/ProductImage';
 
 const NAV: [string, string][] = [
@@ -47,18 +43,6 @@ function Nav({ active }: { active: string }) {
   );
 }
 
-function PhotosLink({ active }: { active: boolean }) {
-  const sets = usePhotoSets();
-  const have = products.filter((p) => sets[p.id]?.files?.length).length;
-  return (
-    <button className={`photos-link ${active ? 'on' : ''}`} onClick={() => go('/photos')} title="Photo manager">
-      📸 <span>
-        {have}/{products.length}
-      </span>
-    </button>
-  );
-}
-
 export default function App() {
   const route = useRoute();
   const [compare, setCompare] = useState<string[]>([]);
@@ -90,11 +74,6 @@ export default function App() {
   } else if (page === 'finder') {
     content = <Finder />;
     active = 'finder';
-  } else if (page === 'audit') {
-    content = <Audit />;
-  } else if (page === 'photos') {
-    content = <PhotoManager focusId={x} />;
-    active = 'photos';
   } else {
     const s = (sections.includes(page as Section) ? page : 'cameras') as Section;
     content = <Browse key={s} section={s} compare={compare} toggleCompare={toggleCompare} />;
@@ -120,7 +99,6 @@ export default function App() {
           </button>
           <div className="top-right">
             <Nav active={active} />
-            <PhotosLink active={active === 'photos'} />
           </div>
         </header>
 
