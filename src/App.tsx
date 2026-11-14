@@ -31,6 +31,9 @@ function Nav({ active }: { active: string }) {
   useLayoutEffect(() => {
     const el = wrap.current?.querySelector<HTMLButtonElement>(`[data-k="${active}"]`);
     setPill(el ? { x: el.offsetLeft, w: el.offsetWidth } : { x: 0, w: 0 });
+    // on phones the menu scrolls sideways: bring the current page's button into view
+    const nav = wrap.current;
+    if (el && nav && nav.scrollWidth > nav.clientWidth) nav.scrollTo({ left: el.offsetLeft - (nav.clientWidth - el.offsetWidth) / 2, behavior: 'smooth' });
   }, [active]);
   return (
     <nav ref={wrap}>

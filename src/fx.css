@@ -246,3 +246,79 @@ header.top nav {
 .rp-table thead th { font-family: var(--display); font-size: 14px; }
 .rp-table td.win { color: var(--good); font-weight: 650; }
 .rp-foot { color: var(--muted); font-size: 12px; text-align: center; padding: 6px 30px 0; }
+
+/* ═════════ browse layouts: Cards / Grid / List ═════════ */
+.result-row { gap: 12px; flex-wrap: wrap; }
+.view-switch { display: inline-flex; gap: 2px; padding: 3px; margin-left: auto; border-radius: 12px; border: 1px solid var(--line); background: rgba(255,255,255,.03); }
+.view-switch button { display: inline-flex; align-items: center; gap: 6px; background: none; border: 0; border-radius: 9px; padding: 6px 11px; color: var(--muted); font-size: 13px; font-weight: 650; }
+.view-switch button span[aria-hidden] { font-size: 15px; line-height: 1; }
+.view-switch button.on { background: var(--text); color: var(--bg); }
+.view-switch button:not(.on):hover { color: var(--text); }
+.card-score { display: none; }
+
+/* Grid: compact tiles, two per row on phones */
+.grid.view-grid { grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 14px; }
+.view-grid > .card { contain-intrinsic-size: auto 300px; }
+.view-grid .card-main { gap: 8px; padding: 8px; }
+.view-grid .card-main > :not(.card-img) { margin: 0 4px; }
+.view-grid .pimg-md { height: 140px; }
+.view-grid .tags, .view-grid .bars { display: none; }
+.view-grid .card-head { flex-direction: column; gap: 4px; }
+.view-grid .card h3 { font-size: 15px; line-height: 1.2; margin: 2px 0 0; }
+.view-grid .price { text-align: left; font-size: 14px; }
+.view-grid .card-score { display: flex; align-items: baseline; gap: 5px; }
+.view-grid .cmp-check { padding: 8px 12px; font-size: 12px; }
+.view-grid .year-badge, .view-grid .type-badge, .view-grid .match-badge { font-size: 10px; padding: 2px 6px; }
+
+/* List: one compact row per product */
+.grid.view-list { grid-template-columns: 1fr; gap: 8px; }
+.view-list > .card { flex-direction: row; align-items: stretch; contain-intrinsic-size: auto 104px; }
+.view-list .card-main { flex: 1; min-width: 0; flex-direction: row; align-items: center; gap: 16px; padding: 8px; }
+.view-list .card-main > :not(.card-img) { margin: 0; }
+.view-list .card-img { flex: none; width: 128px; }
+.view-list .pimg-md { height: 86px; }
+.view-list .type-badge, .view-list .bars { display: none; }
+.view-list .year-badge { top: 4px; left: 4px; font-size: 10px; padding: 2px 6px; }
+.view-list .match-badge { bottom: 4px; left: 4px; font-size: 10px; padding: 2px 6px; }
+.view-list .card-head { flex: 1; min-width: 0; align-items: center; }
+.view-list .card-head > div { min-width: 0; }
+.view-list .card h3 { font-size: 16px; margin: 2px 0 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.view-list .tags { flex: 0 1 34%; max-height: 24px; overflow: hidden; }
+.view-list .card-score { display: flex; flex-direction: column; align-items: center; min-width: 52px; }
+.view-list .cmp-check { margin: 0; border-top: 0; border-left: 1px solid var(--line); padding: 0 16px; }
+.card-score b { font: 600 20px/1 var(--mono); color: var(--text); }
+.card-score small { font-size: 11px; color: var(--muted); }
+
+@media (max-width: 899px) {
+  .view-list .tags { display: none; }
+}
+@media (max-width: 600px) {
+  .vs-label { display: none; }
+  .view-switch button { padding: 7px 12px; }
+  .grid.view-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+  .view-grid .pimg-md { height: 108px; }
+  .view-grid .type-badge { display: none; }
+  .view-grid .card h3 { font-size: 14px; }
+  .view-grid .brand { font-size: 10px; }
+  .view-grid .cmp-check { padding: 8px 10px; }
+  .view-list .card-img { width: 92px; }
+  .view-list .pimg-md { height: 70px; }
+  .view-list .card-main { gap: 10px; padding: 6px; }
+  .view-list .card-head { flex-direction: column; align-items: flex-start; gap: 2px; }
+  .view-list .card h3 { font-size: 14.5px; white-space: normal; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+  .view-list .price { text-align: left; font-size: 13px; }
+  .view-list .card-score { min-width: 40px; }
+  .view-list .card-score b { font-size: 17px; }
+  .view-list .cmp-check { padding: 0 12px; font-size: 0; gap: 0; }
+}
+
+/* ═════════ phone header: logo + photo counter on one row, menu scrolls sideways below ═════════ */
+@media (max-width: 600px) {
+  header.top { flex-direction: row; flex-wrap: wrap; align-items: center; gap: 8px 10px; padding: 10px 0 8px; }
+  header.top .top-right { display: contents; }
+  header.top .logo { order: 1; font-size: 17px; }
+  header.top .photos-link { order: 2; margin-left: auto; padding: 5px 10px; font-size: 12px; }
+  header.top nav { order: 3; flex: 1 0 100%; justify-content: flex-start; overflow-x: auto; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
+  header.top nav::-webkit-scrollbar { display: none; }
+  header.top nav button { flex: none; padding: 7px 13px; }
+}

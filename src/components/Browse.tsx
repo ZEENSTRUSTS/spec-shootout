@@ -56,6 +56,22 @@ function load<T>(key: string, fallback: T): T {
   }
 }
 
+type View = 'cards' | 'grid' | 'list';
+const VIEWS: { v: View; label: string; icon: string }[] = [
+  { v: 'cards', label: 'Cards', icon: '▭' },
+  { v: 'grid', label: 'Grid', icon: '▦' },
+  { v: 'list', label: 'List', icon: '☰' },
+];
+/** The chosen layout is remembered on this device, for every section. */
+function loadView(): View {
+  try {
+    const v = localStorage.getItem('browse-view');
+    return v === 'grid' || v === 'list' ? v : 'cards';
+  } catch {
+    return 'cards';
+  }
+}
+
 const typeOf = (p: Product) => (p.kind === 'camera' ? p.type : p.kind === 'gimbal' ? p.cls : '');
 
 export function Browse({ section, compare, toggleCompare }: { section: Section; compare: string[]; toggleCompare: (id: string) => void }) {
@@ -73,6 +89,15 @@ export function Browse({ section, compare, toggleCompare }: { section: Section; 
   const [lo, setLo] = useState(saved.lo);
   const [hi, setHi] = useState(saved.hi);
   const [finder, setFinder] = useState(saved.finder);
+  const [view, setViewState] = useState<View>(loadView);
+  const setView = (v: View) => {
+    setViewState(v);
+    try {
+      localStorage.setItem('browse-view', v);
+    } catch {
+      /* storage unavailable */
+    }
+  };
   const brands = brandsIn(section);
   const info = SECTION_INFO[section];
   const filmable = section !== 'gimbals';
@@ -343,9 +368,17 @@ export function Browse({ section, compare, toggleCompare }: { section: Section; 
             Reset filters
           </button>
         ) : null}
+        <div className="view-switch" role="group" aria-label="Layout">
+          {VIEWS.map((x) => (
+            <button key={x.v} className={view === x.v ? 'on' : ''} aria-pressed={view === x.v} onClick={() => setView(x.v)} title={`${x.label} view`}>
+              <span aria-hidden>{x.icon}</span>
+              <span className="vs-label">{x.label}</span>
+            </button>
+          ))}
+        </div>
       </div>
 
-      <div className="grid" key={`${brand}-${type}-${era}-${sort}`}>
+      <div className={`grid view-${view}`} key={`${brand}-${type}-${era}-${sort}`}>
         {list.slice(0, shown).map(({ p, match }, i) => (
           <Card key={p.id} p={p} i={i} match={finderOn && fps > 0 ? match : null} fps={fps} picked={compare.includes(p.id)} toggle={() => toggleCompare(p.id)} />
         ))}
@@ -397,8 +430,11 @@ function CardView({ p, i, match, fps, picked, toggle }: { p: Product; i: number;
             </span>
           ))}
         </div>
-        <ScoreBars product={p} compact />
-        
+ <ScoreBars product={p} compact />
+        <span className="card-score" title="Overall score">
+          <b>{scoresFor(p).overall}</b>
+          <small>score</small>
+        </span>
       </button>
       <label className="cmp-check">
         <input type="checkbox" checked={picked} onChange={toggle} />
