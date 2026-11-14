@@ -2,6 +2,7 @@ import { Fragment, useCallback, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { exportJpeg, exportPdf } from '../lib/exporter';
 import { VsReport } from './VsReport';
+import { rankWithReasons } from '../lib/ranking';
 import { byId, products } from '../data';
 import type { Filmable, Product } from '../data/types';
 import { scoresFor } from '../lib/scoring';
@@ -11,29 +12,10 @@ import { CountUp, DuelMatrix, go, scoreRows, SIDES } from './Bits';
 import { BrandLogo } from './BrandLogo';
 import { VideoSection } from './Detail';
 import { ProductImage } from './ProductImage';
+import { Picker } from './Picker';
 
-const SLOT_LABEL = ['You own', 'Considering', 'Also considering', 'Also considering'];
-
-function Picker({ value, kind, onChange, exclude }: { value?: string; kind?: Product['kind']; onChange: (id: string) => void; exclude: string[] }) {
-  const list = products.filter((p) => (!kind || p.kind === kind) && (p.id === value || !exclude.includes(p.id)));
-  const brands = [...new Set(list.map((p) => p.brand))];
-  return (
-    <select className="picker" value={value ?? ''} onChange={(e) => onChange(e.target.value)}>
-      <option value="">{value ? '— Remove —' : 'Choose…'}</option>
-      {brands.map((b) => (
-        <optgroup key={b} label={b}>
-          {list
-            .filter((p) => p.brand === b)
-            .map((p) => (
-              <option key={p.id} value={p.id}>
-                {p.model}
-              </option>
-            ))}
-        </optgroup>
-      ))}
-    </select>
-  );
-}
+const SLOT_NOUN: Record<Product['kind'], string> = { camera: 'Camera', drone: 'Drone', gimbal: 'Gimbal' };
+const slotLabel = (i: number, kind?: Product['kind']) => `${kind ? SLOT_NOUN[kind] : 'Device'} ${i + 1}`;
 
 /** Builds a /vs route from up to four slots, dropping empty trailing ones. */
 const vsRoute = (ids: (string | undefined)[]) => {
@@ -103,8 +85,8 @@ export function Versus({ slots }: { slots: (Product | undefined)[] }) {
             Head to head. <span className="grad">Upgrade or skip?</span>
           </h1>
           <p className="muted">
-            Put what you own first and what you’re eyeing next, up to four at once. Two products get a straight answer: upgrade, sidegrade or skip. Three or four get a
-            ranking.
+            Pick up to four to compare side by side. With two, you get a straight answer on moving from the first to the second: upgrade, sidegrade or skip. With three or four, a
+            ranking that explains why each one lands where it does.
           </p>
         </div>
       </div>
@@ -112,7 +94,7 @@ export function Versus({ slots }: { slots: (Product | undefined)[] }) {
       <div className={`vs-pick n${shown}`}>
         {Array.from({ length: shown }, (_, i) => (
           <div key={i} className="vs-side">
-            <span className={`side-label ${SIDES[i]}`}>{SLOT_LABEL[i]}</span>
+            <span className={`side-label ${SIDES[i]}`}>{slotLabel(i, kind)}</span>
             <Picker value={ids[i]} kind={kind} onChange={(id) => setSlot(i, id)} exclude={ids.filter((x): x is string => !!x)} />
           </div>
         ))}
@@ -166,7 +148,7 @@ export function Versus({ slots }: { slots: (Product | undefined)[] }) {
           <ExportBar items={items} priority={priority} />
 
           {v && <VerdictPanel key={`${a!.id}-${b!.id}-${priority}`} v={v} />}
-          {!duo && <Ranking items={items} owned={a} priority={priority} side={side} />}
+          {!duo && <Ranking items={items} priority={priority} side={side} />}
 
           <div className="panel">
             <h2>Scores</h2>
@@ -398,41 +380,41 @@ function VerdictPanel({ v }: { v: ReturnType<typeof verdict> }) {
   );
 }
 
-/** 3–4 products: rank them, and say what each would mean as a move from the first one. */
-function Ranking({ items, owned, priority, side }: { items: Product[]; owned?: Product; priority: Priority; side: (p: Product) => string }) {
-  const score = (p: Product) => {
-    const s = scoresFor(p);
-    return priority === 'photo' ? s.photo : priority === 'video' ? s.video : priority === 'flight' ? s.flight ?? s.overall : s.overall;
-  };
-  const ranked = [...items].sort((x, y) => score(y) - score(x));
+/** 3–4 products: rank them and explain each position. */
+function Ranking({ items, priority, side }: { items: Product[]; priority: Priority; side: (p: Product) => string }) {
+  const ranked = rankWithReasons(items, priority);
   return (
     <div className="panel ranking">
       <h2>Ranking</h2>
       <ol className="rank-list">
-        {ranked.map((p, i) => {
-          const v = owned && p !== owned ? verdict(owned, p, priority) : null;
-          return (
-            <li key={p.id} className={`rank-row side-${side(p)}`}>
-              <span className="rank-n">{i + 1}</span>
-              <div className="rank-main">
-                <b className={`${side(p)}-text`}>{p.model}</b>
-                <span className="muted small">
-                  {' '}
-                  · {money(p.price)} · {p.year}
-                </span>
-                {v ? (
-                  <div className={`rank-verdict v-${v.level}`}>
-                    <b>{v.title}</b>
-                    {v.gains.length > 0 && <span className="muted"> — {v.gains.slice(0, 2).map((g) => g.text).join(' · ')}</span>}
-                  </div>
-                ) : (
-                  <div className="rank-verdict muted">{owned === p ? 'What you own' : ''}</div>
+        {ranked.map((r) => (
+          <li key={r.p.id} className={`rank-row side-${side(r.p)}`}>
+            <span className="rank-n">{r.rank}</span>
+            <div className="rank-main">
+              <b className={`${side(r.p)}-text`}>{r.p.model}</b>
+              <span className="muted small">
+                {' '}
+                · {money(r.p.price)} · {r.p.year}
+              </span>
+              <div className="rank-why">
+                <p className={r.rank === 1 ? 'rank-head first' : 'rank-head'}>{r.rank === 1 ? `Why it’s #1: ${r.headline}` : r.headline}</p>
+                {r.why.length > 0 && (
+                  <p>
+                    <span className="rank-tag">{r.rank === 1 ? 'Beats the rest on' : `Where #1 is better`}</span>
+                    {r.why.join(' · ')}
+                  </p>
+                )}
+                {r.edge.length > 0 && (
+                  <p>
+                    <span className="rank-tag good">Beats #1 on</span>
+                    {r.edge.join(' · ')}
+                  </p>
                 )}
               </div>
-              <span className="rank-score">{score(p)}</span>
-            </li>
-          );
-        })}
+            </div>
+            <span className="rank-score">{r.score}</span>
+          </li>
+        ))}
       </ol>
     </div>
   );

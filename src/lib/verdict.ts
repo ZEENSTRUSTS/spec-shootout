@@ -208,8 +208,8 @@ export function verdict(current: Product, target: Product, priority: Priority): 
     summary = `Only ${delta >= 0 ? '+' : ''}${delta} points for ${focus}. Upgrade only if a specific feature below is a must-have.`;
   } else {
     level = 'down';
-    title = 'Downgrade — keep what you have';
-    summary = `The ${name} scores ${-delta} points lower for ${focus}. Your current gear is the better tool.`;
+    title = 'Step down — the first one is better';
+    summary = `The ${name} scores ${-delta} points lower for ${focus}. The ${current.model} is the better tool.`;
   }
   if (level !== 'down' && dp > 0 && delta > 0 && dp / delta > 250 && level !== 'strong')
     summary += ` Note: you'd pay roughly ${fmtPrice(Math.round(dp / delta))} per point gained.`;

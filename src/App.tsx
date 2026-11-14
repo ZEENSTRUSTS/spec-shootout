@@ -139,7 +139,15 @@ export default function App() {
               </div>
             ))}
             {picked.length < 2 && <span className="muted small">Pick one more {picked[0].kind}</span>}
-            <button className="btn" disabled={picked.length < 2} onClick={() => go(`/vs/${picked.map((p) => p.id).join("/")}`)}>
+            <button
+              className="btn"
+              disabled={picked.length < 2}
+              onClick={() => {
+                // the picks travel to Versus in the URL; clear the ticks so the list starts fresh next time
+                go(`/vs/${picked.map((p) => p.id).join('/')}`);
+                setCompare([]);
+              }}
+            >
               Compare →
             </button>
           </div>

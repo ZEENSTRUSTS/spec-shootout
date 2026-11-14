@@ -4,11 +4,12 @@ import { scoresFor } from '../lib/scoring';
 import { money, specFor } from '../lib/specRows';
 import { verdict, type Priority } from '../lib/verdict';
 import { inlineImage } from '../lib/exporter';
+import { rankWithReasons } from '../lib/ranking';
 import { DuelMatrix, scoreRows, SIDES } from './Bits';
 import { photosFor, ProductImage } from './ProductImage';
 
 const PRIORITY_LABEL: Record<Priority, string> = { hybrid: 'All-round / hybrid', photo: 'Mostly photo', video: 'Mostly video', flight: 'Flying' };
-const ROLE = ['You own', 'Considering', 'Also considering', 'Also considering'];
+const NOUN: Record<Product['kind'], string> = { camera: 'Camera', drone: 'Drone', gimbal: 'Gimbal' };
 
 /** Print-ready comparison sheet, rendered off-screen and captured for PDF / JPEG export. */
 export const VsReport = forwardRef<HTMLDivElement, { items: Product[]; priority: Priority; onReady: () => void }>(function VsReport({ items, priority, onReady }, ref) {
@@ -33,7 +34,6 @@ export const VsReport = forwardRef<HTMLDivElement, { items: Product[]; priority:
     const s = scoresFor(p);
     return priority === 'photo' ? s.photo : priority === 'video' ? s.video : priority === 'flight' ? s.flight ?? s.overall : s.overall;
   };
-  const ranked = [...items].sort((x, y) => score(y) - score(x));
   const filmable = items.every((p) => p.kind !== 'gimbal');
   const date = new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
 
@@ -55,7 +55,7 @@ export const VsReport = forwardRef<HTMLDivElement, { items: Product[]; priority:
         <div className={`rp-products n${items.length}`}>
           {items.map((p, i) => (
             <div key={p.id} className={`rp-prod side-${SIDES[i]}`}>
-              <span className={`rp-role ${SIDES[i]}-text`}>{ROLE[i]}</span>
+              <span className={`rp-role ${SIDES[i]}-text`}>{NOUN[p.kind]} {i + 1}</span>
               <div className="rp-img">{imgs?.[p.id] ? <img src={imgs[p.id]!} alt="" /> : <ProductImage product={p} size="md" cycle={false} />}</div>
               <span className="rp-mute">{p.brand}</span>
               <b className="rp-model">{p.model}</b>
@@ -102,17 +102,28 @@ export const VsReport = forwardRef<HTMLDivElement, { items: Product[]; priority:
         <section className="rp-card" data-block>
           <h2>Ranking</h2>
           <ol className="rp-rank">
-            {ranked.map((p, i) => {
-              const s = SIDES[items.indexOf(p)];
-              const rv = p !== items[0] ? verdict(items[0], p, priority) : null;
+            {rankWithReasons(items, priority).map((r) => {
+              const s = SIDES[items.indexOf(r.p)];
               return (
-                <li key={p.id}>
-                  <span className="rp-n">{i + 1}</span>
+                <li key={r.p.id}>
+                  <span className="rp-n">{r.rank}</span>
                   <div>
-                    <b className={`${s}-text`}>{p.model}</b>
-                    <div className="rp-mute">{rv ? `${rv.title}${rv.gains.length ? ' — ' + rv.gains.slice(0, 2).map((g) => g.text).join(' · ') : ''}` : 'What you own'}</div>
+                    <b className={`${s}-text`}>{r.p.model}</b>
+                    <div className="rp-why">{r.rank === 1 ? `Why it’s #1: ${r.headline}` : r.headline}</div>
+                    {r.why.length > 0 && (
+                      <div className="rp-mute">
+                        <b>{r.rank === 1 ? 'Beats the rest on: ' : 'Where #1 is better: '}</b>
+                        {r.why.join(' · ')}
+                      </div>
+                    )}
+                    {r.edge.length > 0 && (
+                      <div className="rp-mute">
+                        <b className="rp-good">Beats #1 on: </b>
+                        {r.edge.join(' · ')}
+                      </div>
+                    )}
                   </div>
-                  <span className="rp-score">{score(p)}</span>
+                  <span className="rp-score">{r.score}</span>
                 </li>
               );
             })}
