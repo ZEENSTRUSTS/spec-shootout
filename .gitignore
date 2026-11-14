@@ -1,0 +1,14 @@
+# dependencies & builds
+node_modules/
+dist/
+
+# local editor / AI tooling (installed per machine)
+.claude/
+.agents/
+skills-lock.json
+
+# scratch files
+scratch_*.txt
+*.log
+.DS_Store
+Thumbs.db
