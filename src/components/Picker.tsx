@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState, type KeyboardEvent } from 'react';
-import { byId, products } from '../data';
+import { byId, products, sectionOf, type Section } from '../data';
 import type { Product } from '../data/types';
 import { searchProducts } from '../lib/search';
 import { money } from '../lib/specRows';
@@ -10,11 +10,22 @@ import { ProductImage } from './ProductImage';
  * either open the list and choose, or type — using the same forgiving search as the browse pages
  * ("60", "canon 60", "a7 4", "mavik 3"…). Arrow keys + Enter work too.
  */
+const TYPE_LABEL: Record<Section, string> = { cameras: 'Cameras', action: 'Action & 360', drones: 'Drones', gimbals: 'Gimbals' };
+const TYPE_NOUN: Record<Section, string> = { cameras: 'camera', action: 'action camera', drones: 'drone', gimbals: 'gimbal' };
+const TYPE_ORDER: Section[] = ['cameras', 'action', 'drones', 'gimbals'];
+
 export function Picker({ value, kind, onChange, exclude }: { value?: string; kind?: Product['kind']; onChange: (id: string) => void; exclude: string[] }) {
   const pool = useMemo(() => products.filter((p) => !kind || p.kind === kind), [kind]);
   const brands = useMemo(() => [...new Set(pool.map((p) => p.brand))], [pool]);
   const current = value ? byId(value) : undefined;
   const [brand, setBrand] = useState<string>(current?.brand ?? 'All');
+  const [type, setType] = useState<Section | 'All'>('All');
+  // second step, only when the chosen brand makes more than one kind of product (e.g. DJI: drones, gimbals, action)
+  const types = useMemo(() => {
+    const has = new Set(pool.filter((p) => brand === 'All' || p.brand === brand).map(sectionOf));
+    return TYPE_ORDER.filter((t) => has.has(t));
+  }, [pool, brand]);
+  const typeOn = type !== 'All' && types.includes(type) ? type : 'All';
   const [q, setQ] = useState('');
   const [open, setOpen] = useState(false);
   const [hi, setHi] = useState(0);
@@ -23,9 +34,11 @@ export function Picker({ value, kind, onChange, exclude }: { value?: string; kin
   const listRef = useRef<HTMLUListElement>(null);
 
   const options = useMemo(() => {
-    const base = pool.filter((p) => (brand === 'All' || p.brand === brand) && (p.id === value || !exclude.includes(p.id)));
+    const base = pool.filter(
+      (p) => (brand === 'All' || p.brand === brand) && (typeOn === 'All' || sectionOf(p) === typeOn) && (p.id === value || !exclude.includes(p.id)),
+    );
     return q.trim() ? searchProducts(base, q) : [...base].sort((a, b) => b.year - a.year || a.model.localeCompare(b.model));
-  }, [pool, brand, q, value, exclude]);
+  }, [pool, brand, typeOn, q, value, exclude]);
 
   // close when tapping anywhere else
   useEffect(() => {
@@ -37,7 +50,7 @@ export function Picker({ value, kind, onChange, exclude }: { value?: string; kin
     return () => document.removeEventListener('pointerdown', off);
   }, [open]);
 
-  useEffect(() => setHi(0), [q, brand]);
+  useEffect(() => setHi(0), [q, brand, typeOn]);
   useEffect(() => {
     listRef.current?.querySelector<HTMLElement>(`[data-i="${hi}"]`)?.scrollIntoView({ block: 'nearest' });
   }, [hi]);
@@ -77,6 +90,7 @@ export function Picker({ value, kind, onChange, exclude }: { value?: string; kin
         aria-label="Brand"
         onChange={(e) => {
           setBrand(e.target.value);
+          setType('All');
           setQ('');
           setOpen(true);
           input.current?.focus();
@@ -89,12 +103,32 @@ export function Picker({ value, kind, onChange, exclude }: { value?: string; kin
           </option>
         ))}
       </select>
+      {types.length > 1 && (
+        <select
+          className="p2-type"
+          value={typeOn}
+          aria-label="Type"
+          onChange={(e) => {
+            setType(e.target.value as Section | 'All');
+            setQ('');
+            setOpen(true);
+            input.current?.focus();
+          }}
+        >
+          <option value="All">All types</option>
+          {types.map((t) => (
+            <option key={t} value={t}>
+              {TYPE_LABEL[t]}
+            </option>
+          ))}
+        </select>
+      )}
       <div className="p2-field">
         <input
           ref={input}
           className="p2-input"
           value={open ? q : label}
-          placeholder={open && label ? label : brand === 'All' ? 'Choose or type…' : `Choose or type a ${brand}…`}
+          placeholder={open && label ? label : `Choose or type${brand === 'All' ? '' : ` a ${brand}`}${typeOn === 'All' ? '' : ` ${TYPE_NOUN[typeOn]}`}…`}
           onFocus={() => {
             setOpen(true);
             setQ('');
@@ -154,7 +188,8 @@ export function Picker({ value, kind, onChange, exclude }: { value?: string; kin
               ))
             ) : (
               <li className="p2-none">
-                Nothing matches “{q}”{brand !== 'All' ? ` in ${brand}` : ''}.
+                Nothing matches “{q}”{brand !== 'All' ? ` in ${brand}` : ''}
+                {typeOn !== 'All' ? ` ${TYPE_LABEL[typeOn].toLowerCase()}` : ''}.
               </li>
             )}
           </ul>

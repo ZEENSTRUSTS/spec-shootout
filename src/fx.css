@@ -347,7 +347,7 @@ header.top nav {
 .p2-caret, .p2-clear { position: absolute; right: 6px; top: 50%; translate: 0 -50%; width: 26px; height: 26px; display: grid; place-items: center; border: 0; border-radius: 7px; background: none; color: var(--muted); font-size: 16px; line-height: 1; }
 .p2-clear:hover, .p2-caret:hover { background: rgba(255,255,255,.08); color: var(--text); }
 .p2-list { position: absolute; z-index: 40; top: calc(100% + 6px); left: 0; right: 0; min-width: 260px; max-height: min(360px, 55vh); overflow-y: auto; margin: 0; padding: 6px; list-style: none;
-  background: rgba(20,22,28,.97); border: 1px solid var(--line-2); border-radius: 14px; box-shadow: 0 24px 50px -16px rgba(0,0,0,.8); }
+  background: #15171d; border: 1px solid var(--line-2); border-radius: 14px; box-shadow: 0 24px 50px -16px rgba(0,0,0,.8); }
 .p2-list li { display: grid; grid-template-columns: 48px 1fr auto; gap: 10px; align-items: center; padding: 6px 8px; border-radius: 9px; cursor: pointer; }
 .p2-list li.hi { background: rgba(255,255,255,.07); }
 .p2-list li.sel .p2-name { color: var(--accent); }
@@ -363,3 +363,7 @@ header.top nav {
 }
 .vs-pick { position: relative; z-index: 30; }
 .vs-pick.n3 .p2-brand, .vs-pick.n4 .p2-brand { flex-basis: 100%; }
+/* type step (brand makes several kinds of product): brand + type share the first row, search below */
+.p2-type { flex: 1 1 120px; min-width: 110px; padding: 11px 8px; }
+.picker2:has(.p2-type) .p2-brand { flex: 1 1 120px; }
+.picker2:has(.p2-type) .p2-field { flex-basis: 100%; }
