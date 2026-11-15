@@ -12,6 +12,8 @@ body { background: var(--bg); overflow-x: hidden; }
 .aurora .a4 { display: none; }
 /* static dot grid — no animation */
 .aurora::after { content: ""; position: absolute; inset: 0; background-image: radial-gradient(rgba(255,255,255,.03) 1px, transparent 1px); background-size: 28px 28px; }
+/* interactive grid on top of the aurora, under everything else */
+.kinetic-grid { position: fixed; inset: 0; width: 100%; height: 100%; z-index: -1; pointer-events: none; }
 @keyframes drift { from { transform: translate(0,0); } to { transform: translate(5vmax,4vmax); } }
 
 /* gradient text */

@@ -10,6 +10,7 @@ import { Home } from './components/Home';
 import { Page } from './components/Page';
 import { Chrome } from './components/Chrome';
 import { ProductImage } from './components/ProductImage';
+import KineticGrid from './components/ui/kinetic-grid';
 
 const NAV: [string, string][] = [
   ['cameras', 'Cameras'],
@@ -89,6 +90,7 @@ export default function App() {
         <span className="a3" />
         <span className="a4" />
       </div>
+      <KineticGrid />
       <div className="app">
         <header className="top">
           <button className="logo" onClick={() => go('/home')}>
