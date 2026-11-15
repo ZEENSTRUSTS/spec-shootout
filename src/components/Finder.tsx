@@ -5,6 +5,7 @@ import { money } from '../lib/specRows';
 import { EASE, gsap, reducedMotion, useGSAP } from '../lib/motion';
 import { go } from './Bits';
 import { ProductImage } from './ProductImage';
+import { CardBody, CardContainer, CardItem } from './ui/3d-card';
 
 type Opt<V> = { v: V; icon: string; label: string; sub?: string };
 type Q = { key: keyof Answers; title: string; hint?: string; opts: Opt<unknown>[] };
@@ -207,7 +208,12 @@ function Result({ a, picks, restart }: { a: Required<Answers>; picks: ReturnType
   return (
     <div className="fq-anim fq-result">
       <span className="eyebrow">Your best match</span>
-      <PickCard pick={best} hero />
+      {/* the top pick tilts toward the mouse and its photo, name and score lift off the card (desktop) */}
+      <CardContainer containerClassName="fq-3d py-0 block" className="block w-full" maxTilt={6}>
+        <CardBody className="h-auto w-full">
+          <PickCard pick={best} hero />
+        </CardBody>
+      </CardContainer>
       {rest.length > 0 && (
         <>
           <span className="eyebrow fq-also">Also worth a look · {rest.length} more</span>
@@ -239,8 +245,10 @@ function PickCard({ pick, hero, rank }: { pick: ReturnType<typeof findGear>[numb
   const { p } = pick;
   return (
     <button className={`panel fq-pick ${hero ? 'hero-pick' : ''}`} onClick={() => go(`/p/${p.id}`)}>
-      <ProductImage product={p} size={hero ? 'lg' : 'md'} />
-      <div className="fq-pmain">
+      <Lift on={hero} z={45} className="w-full">
+        <ProductImage product={p} size={hero ? 'lg' : 'md'} />
+      </Lift>
+      <Lift on={hero} z={25} className="fq-pmain w-auto">
         <span className="muted small">
           {rank ? <b className="fq-rank">#{rank}</b> : null}
           {p.brand} · {p.year}
@@ -251,8 +259,8 @@ function PickCard({ pick, hero, rank }: { pick: ReturnType<typeof findGear>[numb
             <li key={r}>{r}</li>
           ))}
         </ul>
-      </div>
-      <div className="fq-side">
+      </Lift>
+      <Lift on={hero} z={35} className="fq-side w-auto">
         <span className="fq-match">{pick.fit}%</span>
         <span className="muted small">match</span>
         <span className="ks-price">
@@ -265,7 +273,17 @@ function PickCard({ pick, hero, rank }: { pick: ReturnType<typeof findGear>[numb
             money(pick.cost)
           )}
         </span>
-      </div>
+      </Lift>
     </button>
+  );
+}
+
+/** A div that floats toward the viewer (translateZ) inside the 3D card; a plain div elsewhere. */
+function Lift({ on, z, className, children }: { on?: boolean; z: number; className: string; children: React.ReactNode }) {
+  if (!on) return <div className={className.replace(/\s*w-(full|auto)\b/, '')}>{children}</div>;
+  return (
+    <CardItem translateZ={z} className={className}>
+      {children}
+    </CardItem>
   );
 }
