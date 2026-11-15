@@ -8,6 +8,8 @@ import { CountUp, go, ScoreBars } from './Bits';
 import { BrandLogo, BRAND_COLOR, BRAND_TAGLINE } from './BrandLogo';
 import { ProductImage } from './ProductImage';
 import { observeReveal } from '../lib/motion';
+import Masonry from './ui/Masonry';
+import { photosFor } from './ProductImage';
 
 type Sort = 'overall' | 'newest' | 'oldest' | 'price-asc' | 'price-desc' | `bar:${number}`;
 
@@ -56,17 +58,18 @@ function load<T>(key: string, fallback: T): T {
   }
 }
 
-type View = 'cards' | 'grid' | 'list';
+type View = 'cards' | 'grid' | 'list' | 'photos';
 const VIEWS: { v: View; label: string; icon: string }[] = [
   { v: 'cards', label: 'Cards', icon: '▭' },
   { v: 'grid', label: 'Grid', icon: '▦' },
   { v: 'list', label: 'List', icon: '☰' },
+  { v: 'photos', label: 'Photos', icon: '◫' },
 ];
 /** The chosen layout is remembered on this device, for every section. */
 function loadView(): View {
   try {
     const v = localStorage.getItem('browse-view');
-    return v === 'grid' || v === 'list' ? v : 'cards';
+    return v === 'grid' || v === 'list' || v === 'photos' ? v : 'cards';
   } catch {
     return 'cards';
   }
@@ -378,6 +381,9 @@ export function Browse({ section, compare, toggleCompare }: { section: Section; 
         </div>
       </div>
 
+      {view === 'photos' && list.length > 0 ? (
+        <PhotoWall key={`${brand}-${type}-${era}-${sort}`} list={list.map((x) => x.p)} />
+      ) : (
       <div className={`grid view-${view}`} key={`${brand}-${type}-${era}-${sort}`}>
         {list.slice(0, shown).map(({ p, match }, i) => (
           <Card key={p.id} p={p} i={i} match={finderOn && fps > 0 ? match : null} fps={fps} picked={compare.includes(p.id)} toggle={() => toggleCompare(p.id)} />
@@ -391,6 +397,7 @@ export function Browse({ section, compare, toggleCompare }: { section: Section; 
           </div>
         )}
       </div>
+      )}
     </section>
   );
 }
@@ -441,5 +448,53 @@ function CardView({ p, i, match, fps, picked, toggle }: { p: Product; i: number;
         {picked ? 'In comparison' : 'Compare'}
       </label>
     </article>
+  );
+}
+
+/**
+ * Photos view: an image-first wall for browsing by eye. Each product sits on the studio backdrop at its
+ * own photo's proportions, so the columns fall into a natural masonry rhythm. Loads 36 at a time.
+ */
+const WALL_STEP = 36;
+function PhotoWall({ list }: { list: Product[] }) {
+  const [limit, setLimit] = useState(WALL_STEP);
+  const narrow = typeof window !== 'undefined' && window.matchMedia('(max-width: 599px)').matches; // phones: two columns
+  const withPhoto = useMemo(() => list.filter((p) => photosFor(p.id).length), [list]);
+  const items = useMemo(
+    () =>
+      withPhoto.slice(0, limit).map((p) => ({
+        id: p.id,
+        img: photosFor(p.id)[0],
+        title: `${p.brand} ${p.model}`,
+        description: `${p.year} · ${money(p.price)} · ${scoresFor(p).overall} overall`,
+        alt: `${p.brand} ${p.model}`,
+      })),
+    [withPhoto, limit],
+  );
+  return (
+    <div className="photo-wall">
+      <Masonry
+        items={items}
+        columns={narrow ? 2 : 'auto'}
+        columnWidth={250}
+        gap={narrow ? 10 : 14}
+        radius={14}
+        animateFrom="bottom"
+        stagger={0.03}
+        duration={0.6}
+        bounce={0}
+        hoverEffect="lift"
+        captions="always"
+        lightbox={false}
+        draggable={false}
+        parallax={0}
+        onItemClick={(item) => go(`/p/${item.id}`)}
+      />
+      {withPhoto.length > limit && (
+        <button className="btn ghost photo-more" onClick={() => setLimit((n) => n + WALL_STEP)}>
+          Show {Math.min(WALL_STEP, withPhoto.length - limit)} more · {withPhoto.length - limit} left
+        </button>
+      )}
+    </div>
   );
 }

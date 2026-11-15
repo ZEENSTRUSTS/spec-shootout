@@ -11,6 +11,10 @@ import { Page } from './components/Page';
 import { Chrome } from './components/Chrome';
 import { ProductImage } from './components/ProductImage';
 import KineticGrid from './components/ui/kinetic-grid';
+import Noise from './components/ui/Noise';
+
+// film grain: barely there, shimmers at 8 fps on desktop, still on touch screens (and for reduced motion)
+const GRAIN_FPS = typeof window !== 'undefined' && window.matchMedia('(pointer: fine)').matches ? 8 : 0;
 
 const NAV: [string, string][] = [
   ['cameras', 'Cameras'],
@@ -91,6 +95,7 @@ export default function App() {
         <span className="a4" />
       </div>
       <KineticGrid />
+      <Noise fixed zIndex={90} opacity={0.032} size={1} contrast={0.4} fps={GRAIN_FPS} blendMode="overlay" className="film-grain" />
       <div className="app">
         <header className="top">
           <button className="logo" onClick={() => go('/home')}>

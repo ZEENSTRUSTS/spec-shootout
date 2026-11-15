@@ -120,3 +120,28 @@
 /* search results must sit above the film strips that follow the hero */
 .home-hero { z-index: 5; }
 .home .hs-results { z-index: 50; background: #15171d; }
+
+/* ═════════ The line-up: curved gallery + caption that reads like a spec plate ═════════ */
+.lineup { margin: 40px 0 70px; }
+.lineup-head { display: flex; flex-direction: column; gap: 6px; margin-bottom: 4px; }
+.lineup-stage { height: clamp(300px, 40vw, 520px); margin: -18px -24px 0; outline: none; }
+.lineup-stage:focus-visible { outline: 1px solid var(--accent); outline-offset: -1px; }
+.lineup-caption { all: unset; box-sizing: border-box; cursor: pointer; display: grid; grid-template-columns: 1fr auto auto auto; align-items: end; gap: 6px 28px; width: min(760px, 100%); margin: 6px auto 0; padding: 16px 20px; border: 1px solid var(--line); border-radius: 14px;
+  background: linear-gradient(160deg, rgba(255,255,255,.045), rgba(255,255,255,.01)); animation: lcIn .45s var(--expo) both; transition: border-color .25s; }
+.lineup-caption:hover, .lineup-caption:focus-visible { border-color: color-mix(in srgb, var(--accent) 55%, var(--line)); }
+.lc-meta { grid-column: 1 / -1; font-size: 11px; letter-spacing: .14em; text-transform: uppercase; color: var(--accent); }
+.lc-name { font-family: var(--display); font-size: clamp(22px, 2.6vw, 32px); letter-spacing: -0.03em; line-height: 1.05; }
+.lc-score { display: flex; align-items: baseline; gap: 6px; font: 600 26px/1 var(--mono); color: var(--good); }
+.lc-score small { font: 500 11px var(--mono); color: var(--muted); text-transform: uppercase; letter-spacing: .1em; }
+.lc-price { font: 500 15px var(--mono); color: var(--text); }
+.lc-open { font-size: 13px; color: var(--muted); }
+.lineup-caption:hover .lc-open { color: var(--accent); }
+.lineup-hint { text-align: center; margin-top: 10px; }
+@keyframes lcIn { from { opacity: 0; transform: translateY(6px); } }
+@media (max-width: 899px) {
+  .lineup-stage { margin: 0 -16px; height: 300px; }
+  .lineup-caption { grid-template-columns: 1fr auto; gap: 6px 16px; }
+  .lc-open { display: none; }
+}
+.lh-touch { display: none; }
+@media (pointer: coarse) { .lh-fine { display: none; } .lh-touch { display: inline; } }

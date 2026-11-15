@@ -6,6 +6,7 @@ import { EASE, gsap, reducedMotion, useGSAP } from '../lib/motion';
 import { go } from './Bits';
 import { ProductImage } from './ProductImage';
 import { CardBody, CardContainer, CardItem } from './ui/3d-card';
+import { ScoreRoll } from './Bits';
 
 type Opt<V> = { v: V; icon: string; label: string; sub?: string };
 type Q = { key: keyof Answers; title: string; hint?: string; opts: Opt<unknown>[] };
@@ -261,7 +262,9 @@ function PickCard({ pick, hero, rank }: { pick: ReturnType<typeof findGear>[numb
         </ul>
       </Lift>
       <Lift on={hero} z={35} className="fq-side w-auto">
-        <span className="fq-match">{pick.fit}%</span>
+        <span className="fq-match">
+          <ScoreRoll value={pick.fit} suffix="%" delay={hero ? 0.35 : 0.5 + (rank ?? 0) * 0.06} />
+        </span>
         <span className="muted small">match</span>
         <span className="ks-price">
           {pick.used ? (

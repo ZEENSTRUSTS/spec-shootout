@@ -9,6 +9,10 @@ import { money } from '../lib/specRows';
 import { go } from './Bits';
 import { Aperture, setIris } from './Chrome';
 import { ProductImage } from './ProductImage';
+import BlurText from './ui/BlurText';
+import CircularGallery from './ui/CircularGallery';
+import { photosFor } from './ProductImage';
+import { ScoreRoll } from './Bits';
 import { searchProducts } from '../lib/search';
 
 const search = (q: string): Product[] => (q.trim() ? searchProducts(products, q) : []);
@@ -60,6 +64,9 @@ function Strip({ ids, dir }: { ids: string[]; dir: 1 | -1 }) {
 export function Home() {
   const root = useRef<HTMLElement>(null);
   const [q, setQ] = useState('');
+  // the headline focuses in once the logo intro has finished
+  const [lit, setLit] = useState(false);
+  useEffect(() => whenIntroDone(() => setLit(true)), []);
   const [hi, setHi] = useState(0);
   const input = useRef<HTMLInputElement>(null);
   const results = useMemo(() => search(q).slice(0, 8), [q]);
@@ -81,7 +88,6 @@ export function Home() {
       const $ = (s: string) => el.querySelectorAll<HTMLElement>(s);
 
       /* ── HERO: a cinematic, staged exposure ── */
-      const split = SplitText.create('.hh-title', { type: 'lines', mask: 'lines', linesClass: 'hh-line' });
       const iris = { r: 0, rot: -30 };
       const svg = el.querySelector<SVGSVGElement>('.hero-iris svg');
       const R = 100;
@@ -91,7 +97,6 @@ export function Home() {
         .from(svg, { scale: 0.6, autoAlpha: 0, rotation: -60, duration: 1.6 }, 0)
         .to(iris, { r: 46, rot: 25, duration: 1.8, ease: 'power3.inOut', onUpdate: () => setIris(svg, R, iris.r, iris.rot) }, 0.1)
         .from('.hh-eyebrow', { autoAlpha: 0, letterSpacing: '0.5em', duration: 1.2 }, 0.25)
-        .from(split.lines, { yPercent: 118, rotation: 2.5, duration: 1.25, stagger: 0.11 }, 0.3)
         .from('.hh-sub', { autoAlpha: 0, y: 18, duration: 0.9 }, 0.75)
         .fromTo('.home-search', { clipPath: 'inset(0 50% 0 50% round 16px)', autoAlpha: 0 }, { clipPath: 'inset(0 0% 0 0% round 16px)', autoAlpha: 1, duration: 1.1, clearProps: 'clipPath' }, 0.85)
         .from('.hs-chips > *', { autoAlpha: 0, y: 10, duration: 0.6, stagger: 0.05 }, 1.15)
@@ -232,11 +237,16 @@ export function Home() {
         <div className="hh-copy">
           <span className="eyebrow hh-eyebrow">The camera & drone decision engine</span>
           <h1 className="hh-title">
-            Find any camera,
-            <br />
-            drone or gimbal.
-            <br />
-            <span className="grad">Compare. Decide.</span>
+            {/* words pull into focus like a lens racking in: short, small travel, no bounce */}
+            {(
+              [
+                ['Find any camera,', 0.3, ''],
+                ['drone or gimbal.', 0.45, ''],
+                ['Compare. Decide.', 0.66, 'grad'],
+              ] as const
+            ).map(([text, start, cls]) => (
+              <BlurText key={text} as="span" className="hh-bline" text={text} play={lit} start={start} effect="focus" delay={55} stepDuration={0.3} blur={6} pieceClassName={cls} />
+            ))}
           </h1>
           <p className="hh-sub muted">{products.length} products — every video mode, crop and frame rate, scored and compared head to head.</p>
 
@@ -366,6 +376,9 @@ export function Home() {
         </div>
       </div>
 
+      {/* ═════════ THE LINE-UP (curved gallery) ═════════ */}
+      <Lineup />
+
       {/* ═════════ BROWSE ═════════ */}
       <h2 className="home-h">Browse the catalogue</h2>
       <div className="home-sections">
@@ -477,6 +490,134 @@ export function Home() {
           Search the catalogue
         </button>
       </div>
+    </section>
+  );
+}
+
+/* ── The line-up: this year's headline gear on a slow curved gallery. Drag / swipe / arrow keys. ── */
+const LINEUP = ['sony-a1ii', 'canon-r5ii', 'nikon-z8', 'fujifilm-x100vi', 'panasonic-gh7', 'sony-fx3', 'canon-c80', 'nikon-z6iii', 'dji-mavic-4-pro', 'dji-mini-5-pro', 'dji-osmo-pocket-4', 'insta360-x6', 'gopro-hero13', 'dji-rs-5'];
+
+/** WebGL needs CORS-clean images: hotlinked photos go through a public image relay. */
+function relay(src: string): string {
+  if (!/^https?:/.test(src)) return src; // bundled photo, same origin
+  return `https://images.weserv.nl/?url=${encodeURIComponent(src)}&trim=12&w=900&output=jpg&bg=ffffff&q=86`; // trim: crop away the retailer's empty margins
+}
+
+/**
+ * Re-shoot each photo on the site's studio backdrop (the same soft white-to-grey sweep as every product tile),
+ * centred with even padding, so the gallery reads as one consistent set instead of mismatched retailer crops.
+ */
+function studioShot(src: string): Promise<string> {
+  const shot = new Promise<string>((resolve) => {
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+    img.onload = () => {
+      const W = 1200;
+      const H = 900;
+      const c = document.createElement('canvas');
+      c.width = W;
+      c.height = H;
+      const ctx = c.getContext('2d')!;
+      const g = ctx.createRadialGradient(W * 0.5, H * 0.35, 0, W * 0.5, H * 0.35, Math.hypot(W, H) * 0.55);
+      g.addColorStop(0, '#ffffff');
+      g.addColorStop(0.78, '#dfe3e9');
+      g.addColorStop(1, '#d6dbe2');
+      ctx.fillStyle = g;
+      ctx.fillRect(0, 0, W, H);
+      const k = Math.min((W * 0.74) / img.naturalWidth, (H * 0.7) / img.naturalHeight);
+      const w = img.naturalWidth * k;
+      const h = img.naturalHeight * k;
+      ctx.globalCompositeOperation = 'multiply'; // white product backgrounds melt into the sweep
+      ctx.drawImage(img, (W - w) / 2, (H - h) / 2 + H * 0.02, w, h);
+      c.toBlob((b) => resolve(b ? URL.createObjectURL(b) : src), 'image/jpeg', 0.9);
+    };
+    img.onerror = () => resolve('');
+    img.src = relay(src);
+  });
+  // never leave the gallery waiting on one slow photo: after 9 s it's simply left out
+  return Promise.race([shot, new Promise<string>((r) => setTimeout(() => r(''), 9000))]);
+}
+
+function Lineup() {
+  const items = useMemo(() => LINEUP.map((id) => byId(id)).filter((p): p is Product => !!p && !!photosFor(p.id).length), []);
+  const [gallery, setGallery] = useState<{ image: string; alt: string }[] | null>(null);
+  const [shown, setShown] = useState<Product[]>(items); // the products whose photo made it
+  const stage = useRef<HTMLDivElement>(null);
+  const [near, setNear] = useState(false);
+  // only fetch the photos once the section is close to the screen
+  useEffect(() => {
+    const el = stage.current;
+    if (!el) return;
+    const io = new IntersectionObserver(([e]) => e.isIntersecting && (setNear(true), io.disconnect()), { rootMargin: '900px 0px' });
+    io.observe(el);
+    return () => io.disconnect();
+  }, []);
+  useEffect(() => {
+    if (!near) return;
+    let live = true;
+    const made: string[] = [];
+    Promise.all(items.map((p) => studioShot(photosFor(p.id)[0]))).then((urls) => {
+      made.push(...urls.filter((u) => u.startsWith('blob:')));
+      if (!live) return;
+      const ok = items.map((p, i) => ({ p, image: urls[i] })).filter((x) => x.image);
+      setShown(ok.map((x) => x.p));
+      setGallery(ok.map(({ p, image }) => ({ image, alt: `${p.brand} ${p.model}` })));
+    });
+    return () => {
+      live = false;
+      made.forEach((u) => URL.revokeObjectURL(u));
+    };
+  }, [items, near]);
+  const [active, setActive] = useState(0);
+  // phones: bigger cards so the photo, not the empty stage, fills the width
+  const narrow = typeof window !== 'undefined' && window.matchMedia('(max-width: 899px)').matches;
+  const list = shown.length ? shown : items;
+  const p = list[((active % list.length) + list.length) % list.length];
+  if (!p) return null;
+  return (
+    <section className="lineup" aria-label="The line-up">
+      <div className="lineup-head">
+        <span className="eyebrow">The line-up</span>
+        <h2 className="home-h">This year’s headline gear.</h2>
+      </div>
+      <div className="lineup-stage" ref={stage}>
+        {gallery && (
+        <CircularGallery
+          items={gallery}
+          bend={1.6}
+          itemAspect={1.333}
+          itemSize={narrow ? 1.5 : 0.92}
+          gap={0.2}
+          wave={0.25}
+          borderRadius={0.035}
+          fadeEdges={0.2}
+          shadow={0.45}
+          scrollEase={0.07}
+          showTitles={false}
+          openOnClick={false}
+          textColor="#eceef2"
+          font="600 20px 'Space Grotesk'"
+          onActiveChange={setActive}
+          onItemClick={(_, i) => go(`/p/${list[i % list.length].id}`)}
+        />
+        )}
+      </div>
+      <button className="lineup-caption" key={p.id} onClick={() => go(`/p/${p.id}`)}>
+        <span className="lc-meta mono">
+          {String(list.indexOf(p) + 1).padStart(2, '0')} / {String(list.length).padStart(2, '0')} · {p.brand} · {p.year}
+        </span>
+        <b className="lc-name">{p.model}</b>
+        <span className="lc-score">
+          <ScoreRoll value={scoresFor(p).overall} duration={0.8} />
+          <small>overall</small>
+        </span>
+        <span className="lc-price">{money(p.price)}</span>
+        <span className="lc-open">View specs →</span>
+      </button>
+      <p className="lineup-hint muted small">
+        <span className="lh-fine">Drag or use ← → to turn the line-up</span>
+        <span className="lh-touch">Swipe to turn the line-up</span>
+      </p>
     </section>
   );
 }

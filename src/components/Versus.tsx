@@ -8,7 +8,7 @@ import type { Filmable, Product } from '../data/types';
 import { scoresFor } from '../lib/scoring';
 import { money, specFor } from '../lib/specRows';
 import { verdict, type Priority } from '../lib/verdict';
-import { CountUp, DuelMatrix, go, scoreRows, SIDES } from './Bits';
+import { CountUp, DuelMatrix, go, ScoreRoll, scoreRows, SIDES } from './Bits';
 import { BrandLogo } from './BrandLogo';
 import { VideoSection } from './Detail';
 import { ProductImage } from './ProductImage';
@@ -412,7 +412,9 @@ function Ranking({ items, priority, side }: { items: Product[]; priority: Priori
                 )}
               </div>
             </div>
-            <span className="rank-score">{r.score}</span>
+            <span className="rank-score">
+              <ScoreRoll value={r.score} delay={0.15 * (r.rank - 1)} />
+            </span>
           </li>
         ))}
       </ol>

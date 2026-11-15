@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import type { Filmable, Product, VideoMode } from '../data/types';
 import { modeWidth, resTier, scoresFor } from '../lib/scoring';
+import RollCount from './ui/CountUp';
 
 // ── tiny hash router ─────────────────────────────────────────
 export function useRoute() {
@@ -97,11 +98,18 @@ export function ScoreBars({ product, compact }: { product: Product; compact?: bo
   );
 }
 
+/** Headline scores roll into place digit by digit, like a lens-barrel counter (React Bits CountUp, roll mode). */
+export function ScoreRoll({ value, suffix, duration = 1.1, delay = 0 }: { value: number; suffix?: string; duration?: number; delay?: number }) {
+  return <RollCount to={value} mode="roll" duration={duration} delay={delay} suffix={suffix} className="score-roll" />;
+}
+
 export function ScoreRing({ value, size = 96, label = 'overall' }: { value: number; size?: number; label?: string }) {
   const v = useCountUp(value, 1100);
   return (
     <div className="ring" style={{ ['--v' as string]: v, width: size, height: size }}>
-      <span style={{ fontSize: size * 0.31 }}>{v}</span>
+      <span style={{ fontSize: size * 0.31 }}>
+        <ScoreRoll value={value} />
+      </span>
       <small>{label}</small>
     </div>
   );

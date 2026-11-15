@@ -4,6 +4,7 @@ import { kitFor, tierLabel, TIERS, TRACKS, type Kit, type KitOption, type KitSlo
 import { money } from '../lib/specRows';
 import { go } from './Bits';
 import { ProductImage } from './ProductImage';
+import ScrollStack, { ScrollStackItem } from './ui/ScrollStack';
 
 const priceOf = (o: KitOption) => ('id' in o ? o.used ?? byId(o.id)?.price ?? 0 : o.price);
 
@@ -137,6 +138,8 @@ export function Kits({ track: t, tier: r }: { track?: string; tier?: string }) {
           </button>
         )}
       </div>
+
+      <PathStack track={track} current={tier} />
     </section>
   );
 }
@@ -192,5 +195,56 @@ function ProductOption({ id, why, used }: { id: string; why?: string; used?: num
         )}
       </span>
     </button>
+  );
+}
+
+/**
+ * The whole path as a stack: one card per level, each settling on top of the last as you scroll,
+ * so the climb from first camera to world-class reads as one story. The level you're on is marked.
+ */
+function PathStack({ track, current }: { track: Track; current: TierKey }) {
+  const noun = track === 'drone' ? 'drone' : track === 'action' ? 'action camera' : 'camera';
+  return (
+    <section className="path-stack" aria-label="The whole path">
+      <div className="ps-head">
+        <span className="eyebrow">The whole path</span>
+        <h2>From your first {noun} to world-class.</h2>
+        <p className="muted">Six levels. Scroll to climb them; tap one to open its full kit.</p>
+      </div>
+      <ScrollStack useWindowScroll smoothScroll={false} itemDistance={70} itemStackDistance={16} stackPosition="16%" baseScale={0.9} itemScale={0.018} dimAmount={0.45} holdDistance={90}>
+        {TIERS.map((x, i) => {
+          const k = kitFor(track, x.key);
+          const b = kitBudget(k);
+          const hero = k.slots[0].options.map((o) => ('id' in o ? byId(o.id) : undefined)).find(Boolean);
+          const here = x.key === current;
+          return (
+            <ScrollStackItem key={x.key} itemClassName={`path-card ${here ? 'here' : ''}`}>
+              <button className="pc-hit" onClick={() => go(`/kits/${track}/${x.key}`)} aria-label={`Open the ${tierLabel(x.key, track)} kit`}>
+                <div className="pc-copy">
+                  <span className="pc-level mono">
+                    Level {String(i + 1).padStart(2, '0')} / 06{here && <em> · You are here</em>}
+                  </span>
+                  <b className="pc-title">{tierLabel(x.key, track)}</b>
+                  <span className="pc-who">{k.who}</span>
+                  <span className="pc-goal muted">{k.goal}</span>
+                  <span className="pc-foot">
+                    <span className="pc-budget mono">{range(b)}</span>
+                    <span className="pc-open">{here ? 'Your current kit' : 'Open this kit →'}</span>
+                  </span>
+                </div>
+                {hero && (
+                  <div className="pc-shot">
+                    <ProductImage product={hero} size="lg" cycle={false} />
+                    <span className="pc-cap mono">
+                      {hero.brand} {hero.model}
+                    </span>
+                  </div>
+                )}
+              </button>
+            </ScrollStackItem>
+          );
+        })}
+      </ScrollStack>
+    </section>
   );
 }
