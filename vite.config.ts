@@ -1,5 +1,6 @@
 import { defineConfig, type Plugin } from 'vite';
 import react from '@vitejs/plugin-react';
+import tailwindcss from '@tailwindcss/vite';
 import { resolve } from 'node:path';
 
 /** Dev-only image relay for exports: GET /api/img?u=<https url> returns the image with same-origin headers. */
@@ -28,8 +29,8 @@ function imageRelay(): Plugin {
 export default defineConfig({
   // relative asset paths so the build works from any folder (e.g. GitHub Pages /repo-name/)
   base: './',
-  plugins: [react(), imageRelay()],
+  plugins: [react(), tailwindcss(), imageRelay()],
   // jsPDF lazily imports canvg for SVG drawing; we only add JPEGs, so point it at a stub
-  resolve: { alias: { canvg: resolve(__dirname, 'src/lib/empty.ts') } },
+  resolve: { alias: { '@': resolve(__dirname, 'src'), canvg: resolve(__dirname, 'src/lib/empty.ts') } },
   server: { port: 5173 },
 });
